@@ -17,6 +17,9 @@ export interface ILoginFields {
     password: string
 }
 
-export interface IGetUserAuthInfoRequest extends Request {
-    user: string
+
+
+export interface IGroupFields {
+  unique_group_name: string,
+  group_name: string
 }

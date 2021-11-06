@@ -1,10 +1,10 @@
 import Joi from "joi";
-import { ILoginFields, IRegisterFields } from "./types";
+import { IGroupFields, ILoginFields, IRegisterFields } from "./types";
 
 // Registration Validation
 export const registerValidation = (data: IRegisterFields) => {
   const schema = Joi.object({
-    group_id: Joi.number(),
+    group_id: Joi.string(),
     first_name: Joi.string().min(1).max(100).required(),
     last_name: Joi.string().min(1).max(100).required(),
     age: Joi.number().integer().min(1).max(120).required(),
@@ -32,3 +32,12 @@ export const loginValidation = (data: ILoginFields) => {
 
   return schema.validate(data)
 };
+
+export const groupValidation = (data: IGroupFields) => {
+  const schema = Joi.object({
+    unique_group_name: Joi.string().required(),
+    group_name: Joi.string().required()
+  })
+
+  return schema.validate(data)
+}

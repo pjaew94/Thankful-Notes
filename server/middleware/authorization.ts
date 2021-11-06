@@ -1,13 +1,12 @@
 import { Request, Response, NextFunction} from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
-import { IGetUserAuthInfoRequest } from './types';
 
 
 
 dotenv.config();
 
-module.exports = async (req: IGetUserAuthInfoRequest, res: Response, next: NextFunction) => {
+module.exports = async (req: Request, res: Response, next: NextFunction) => {
     try{
         const jwtToken = req.header("token");
     
