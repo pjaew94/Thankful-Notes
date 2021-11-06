@@ -37,8 +37,7 @@ router.post("/", async (req, res) => {
         last_name,
         age,
         email,
-        password,
-        date_joined,
+        password
       } = req.body;
 
       //Checks to see if user with the same email already exists
@@ -58,7 +57,7 @@ router.post("/", async (req, res) => {
       const isInGroup = group_id ? true : false;
 
       const newUser = await pool.query(
-        "INSERT INTO users(is_in_group, group_id, first_name, last_name, age, email, password, date_joined) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+        "INSERT INTO users(is_in_group, group_id, first_name, last_name, age, email, password) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
         [
           isInGroup,
           group_id,
@@ -66,8 +65,7 @@ router.post("/", async (req, res) => {
           last_name,
           age,
           email,
-          bcryptPassword,
-          date_joined,
+          bcryptPassword
         ]
       );
 
@@ -138,12 +136,58 @@ router.get("/check/is-verify", authorization, async (req, res) => {
 // Delete User - FINISH
 router.delete("/", authorization, async (req, res) => {
   try {
-    await pool.query("DELETE FROM users WHERE id = $1", [req.user]);
-    res.status(200).send("User has been deleted");
+    const {password} = req.body
+    const user = await pool.query('SELECT password FROM users WHERE id = $1', [req.user])
+    const validPassword = await bcrypt.compare(
+      password,
+      user.rows[0].password
+    );
+
+    console.log(validPassword)
+
+    if(validPassword) {
+      await pool.query("DELETE FROM users WHERE id = $1", [req.user]);
+      return res.status(200).send("User has been deleted");
+    } else {
+      return res.status(401).send("The password you have entered is incorrect")
+    }
   } catch (err) {
     console.log(err);
     res.status(500).send("Server Error");
   }
 });
+
+// User Leaves Group - FINISH
+router.put('/leave-group', authorization, async(req, res) => {
+  try {
+    await pool.query("UPDATE users SET group_id = $1, is_in_group = $2 WHERE id = $3", [null, false, req.user])
+
+    return res.status(200).send("You've successfully left the group")
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+})
+
+// User Joins Group - FINISH
+router.put('/join-group', authorization, async(req, res) => {
+  try { 
+    const {unique_group_name} = req.body
+
+    const group = await pool.query("SELECT id, group_name FROM groups WHERE unique_group_name = $1", [unique_group_name])
+    if(group.rows.length > 0) {
+      await pool.query("UPDATE users SET group_id = $1, is_in_group = $2 WHERE id = $3", [group.rows[0].id, true, req.user])
+      return res.status(200).send(`You've successfully joined ${group.rows[0].group_name}!`)
+    } else {
+      return res.status(401).send('The group you are trying to join does not exist')
+    }
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+})
+
+
 
 module.exports = router;

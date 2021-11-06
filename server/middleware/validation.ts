@@ -13,8 +13,7 @@ export const registerValidation = (data: IRegisterFields) => {
       tlds: { allow: ["com", "net", "org"] },
     }),
     password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
-    repeat_password: Joi.ref("password"),
-    date_joined: Joi.string().required(),
+    repeat_password: Joi.ref("password")
   }).unknown();
 
 
