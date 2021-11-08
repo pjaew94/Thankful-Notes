@@ -75,13 +75,11 @@ router.post("/", authorization, async (req, res) => {
   }
 });
 
-// Get Post If User's or Groups's Post
-router.get("/", authorization, async (req, res) => {
+// Get Post If User's or Groups's Post - FINISH
+router.get("/:id", authorization, async (req, res) => {
   try {
-    const { postId } = req.body;
-
     const post = await pool.query("SELECT * FROM posts WHERE id = $1", [
-      postId,
+      req.params.id,
     ]);
     const postInfo = post.rows[0];
 
@@ -106,23 +104,71 @@ router.get("/", authorization, async (req, res) => {
   }
 });
 
-// Delete Post If Owner
-router.delete("/", authorization, async (req, res) => {
-  const { postId } = req.body;
-
+// Delete Post If Owner - FINISH
+router.delete("/:id", authorization, async (req, res) => {
   const post = await pool.query("SELECT user_id FROM posts WHERE id = $1", [
-    postId,
+    req.params.id,
   ]);
   const postUserId = post.rows[0].user_id;
 
   try {
-      if(postUserId !== req.user) {
-        return res.status(401).json("You do not have permission to delete this post")
+    if (postUserId !== req.user) {
+      return res
+        .status(401)
+        .json("You do not have permission to delete this post");
     } else {
-        await pool.query("DELETE FROM posts WHERE id = $1", [postId]);
-        return res.status(200).send("The post has been successfully deleted");
+      await pool.query("DELETE FROM posts WHERE id = $1", [req.params.id]);
+      return res.status(200).send("The post has been successfully deleted");
     }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+});
 
+// Edit Post If Owner
+router.put("/:id", authorization, async (req, res) => {
+  try {
+    const post = await pool.query("SELECT user_id FROM posts WHERE id = $1", [
+      req.params.id,
+    ]);
+    const postUserId = post.rows[0].user_id;
+
+    if (postUserId !== req.user) {
+      return res
+        .status(401)
+        .send("You do not have permission to edit this post");
+    } else {
+      const {
+        thought_on_verse1,
+        thought_on_verse2,
+        thought_on_verse3,
+        thought_on_verse4,
+        thought_on_verse5,
+        show_thanks1,
+        show_thanks2,
+        show_thanks3,
+        is_private,
+      } = req.body;
+
+      await pool.query(
+        "UPDATE posts SET thought_on_verse1 = $2, thought_on_verse2 = $3, thought_on_verse3 = $4, thought_on_verse4 = $5, thought_on_verse5 = $6, show_thanks1 = $7, show_thanks2 = $8, show_thanks3 = $9, is_private = $10 WHERE id = $1",
+        [
+          req.params.id,
+          thought_on_verse1,
+          thought_on_verse2,
+          thought_on_verse3,
+          thought_on_verse4,
+          thought_on_verse5,
+          show_thanks1,
+          show_thanks2,
+          show_thanks3,
+          is_private,
+        ]
+      );
+
+      return res.status(200).send('Successfully edited post')
+    }
   } catch (err) {
     console.log(err);
     res.status(500).send("Server Error");

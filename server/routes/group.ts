@@ -1,10 +1,11 @@
 import express from "express";
 import { groupValidation } from "./../middleware/validation";
+const authorization = require("../middleware/authorization");
 const pool = require("../db");
 
 const router = express.Router();
 
-// Create New Group
+// Create New Group - FINISH
 router.post("/", async (req, res) => {
   const { error } = groupValidation(req.body);
 
@@ -36,4 +37,7 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.get('/', authorization, async(req, res) => {
+  
+})
 module.exports = router;
