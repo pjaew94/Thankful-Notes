@@ -1,8 +1,6 @@
 CREATE DATABASE thankfulnotes;
 
 CREATE TABLE users (
-    id uuid NOT NULL PRIMARY KEY DEFAULT
-    uuid_generate_v4(),
     is_in_group BOOLEAN NOT NULL,
     group_id uuid,
     first_name VARCHAR(100) NOT NULL,
@@ -27,8 +25,30 @@ CREATE TABLE groups (
     uuid_generate_v4(),
     unique_group_name VARCHAR(100) NOT NULL,
     group_name VARCHAR(100) NOT NULL,
-    date_created timestamp with time zone DEFAULT CURRENT_TIMESTAMP(0),
+    date_joined timestamp with time zone DEFAULT CURRENT_TIMESTAMP(0),
     UNIQUE (unique_group_name)
 );
 
 INSERT INTO groups (unique_group_name, group_name) values ('Jesus Love Church', 'Jesus Love Church');
+
+
+CREATE TABLE posts (
+    id uuid NOT NULL PRIMARY KEY DEFAULT
+    uuid_generate_v4(),
+    user_id uuid NOT NULL,
+    group_id uuid,
+    verse_of_the_day VARCHAR(1000) NOT NULL,
+    verse_book VARCHAR(100) NOT NULL,
+    verse_verse VARCHAR(100) NOT NULL,
+    thought_on_verse1 VARCHAR(2000) NOT NULL,
+    thought_on_verse2 VARCHAR(2000) NOT NULL,
+    thought_on_verse3 VARCHAR(2000) NOT NULL,
+    thought_on_verse4 VARCHAR(2000) NOT NULL,
+    thought_on_verse5 VARCHAR(2000) NOT NULL,
+    show_thanks1 VARCHAR(2000) NOT NULL,
+    show_thanks2 VARCHAR(2000) NOT NULL,
+    show_thanks3 VARCHAR(2000) NOT NULL,
+    is_private BOOLEAN NOT NULL,
+    date_joined timestamp with time zone DEFAULT CURRENT_TIMESTAMP(0)
+);
+
