@@ -6,9 +6,10 @@ const router = express.Router();
 
 // Create Post - FINISH
 router.post("/", authorization, async (req, res) => {
-  const user = await pool.query("SELECT group_id FROM users WHERE id = $1", [
-    req.user,
-  ]);
+  const user = await pool.query(
+    "SELECT group_id, username FROM users WHERE id = $1",
+    [req.user]
+  );
   const userGroupId = user.rows[0].group_id;
   const {
     verse_of_the_day,
@@ -26,7 +27,7 @@ router.post("/", authorization, async (req, res) => {
   } = req.body;
 
   const data = {
-    user_id: req.user,
+    username: user.rows[0].username,
     group_id: userGroupId,
     verse_of_the_day,
     verse_book,
@@ -48,9 +49,9 @@ router.post("/", authorization, async (req, res) => {
   } else {
     try {
       const newPost = await pool.query(
-        "INSERT INTO posts(user_id, group_id, verse_of_the_day, verse_book, verse_verse, thought_on_verse1,thought_on_verse2,thought_on_verse3,thought_on_verse4,thought_on_verse5, show_thanks1,show_thanks2,show_thanks3, is_private) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *",
+        "INSERT INTO posts(username, group_id, verse_of_the_day, verse_book, verse_verse, thought_on_verse1,thought_on_verse2,thought_on_verse3,thought_on_verse4,thought_on_verse5, show_thanks1,show_thanks2,show_thanks3, is_private) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *",
         [
-          req.user,
+          user.rows[0].username,
           userGroupId,
           verse_of_the_day,
           verse_book,
@@ -83,14 +84,16 @@ router.get("/:id", authorization, async (req, res) => {
     ]);
     const postInfo = post.rows[0];
 
-    const user = await pool.query("SELECT group_id FROM users WHERE id = $1", [
-      req.user,
-    ]);
+    const user = await pool.query(
+      "SELECT group_id, username FROM users WHERE id = $1",
+      [req.user]
+    );
     const userGroupId = user.rows[0].group_id;
 
     if (
-      (postInfo.user_id !== req.user && postInfo.group_id !== userGroupId) ||
-      (postInfo.user_id !== req.user && postInfo.is_private)
+      (postInfo.username !== user.rows[0].username &&
+        postInfo.group_id !== userGroupId) ||
+      (postInfo.username !== user.rows[0].username && postInfo.is_private)
     ) {
       return res
         .status(401)
@@ -106,13 +109,17 @@ router.get("/:id", authorization, async (req, res) => {
 
 // Delete Post If Owner - FINISH
 router.delete("/:id", authorization, async (req, res) => {
-  const post = await pool.query("SELECT user_id FROM posts WHERE id = $1", [
-    req.params.id,
-  ]);
-  const postUserId = post.rows[0].user_id;
-
   try {
-    if (postUserId !== req.user) {
+    const post = await pool.query("SELECT username FROM posts WHERE id = $1", [
+      req.params.id,
+    ]);
+    const user = await pool.query("SELECT username FROM users WHERE id = $1", [
+      req.user,
+    ]);
+
+    const postUsername = post.rows[0].username;
+    const deleterUsername = user.rows[0].username;
+    if (postUsername !== deleterUsername) {
       return res
         .status(401)
         .json("You do not have permission to delete this post");
@@ -129,12 +136,17 @@ router.delete("/:id", authorization, async (req, res) => {
 // Edit Post If Owner
 router.put("/:id", authorization, async (req, res) => {
   try {
-    const post = await pool.query("SELECT user_id FROM posts WHERE id = $1", [
+    const post = await pool.query("SELECT username FROM posts WHERE id = $1", [
       req.params.id,
     ]);
-    const postUserId = post.rows[0].user_id;
+    const user = await pool.query("SELECT username FROM users WHERE id = $1", [
+      req.user,
+    ]);
 
-    if (postUserId !== req.user) {
+    const postUsername = post.rows[0].username;
+    const editorUsername = user.rows[0].username;
+
+    if (postUsername !== editorUsername) {
       return res
         .status(401)
         .send("You do not have permission to edit this post");
@@ -167,12 +179,16 @@ router.put("/:id", authorization, async (req, res) => {
         ]
       );
 
-      return res.status(200).send('Successfully edited post')
+      return res.status(200).send("Successfully edited post");
     }
   } catch (err) {
     console.log(err);
     res.status(500).send("Server Error");
   }
 });
+
+
+
+
 
 module.exports = router;

@@ -4,6 +4,7 @@ import { IGroupFields, ILoginFields, IPostsFields, IRegisterFields } from "./typ
 export const registerValidation = (data: IRegisterFields) => {
   const schema = Joi.object({
     group_id: Joi.string(),
+    username: Joi.string().min(1).max(100).required(),
     first_name: Joi.string().min(1).max(100).required(),
     last_name: Joi.string().min(1).max(100).required(),
     age: Joi.number().integer().min(1).max(120).required(),
@@ -42,7 +43,7 @@ export const groupValidation = (data: IGroupFields) => {
 
 export const postValidation = (data: IPostsFields) => {
   const schema = Joi.object({
-    user_id: Joi.string().required(),
+    username: Joi.string().required(),
     group_id: Joi.string(),
     verse_of_the_day: Joi.string().required(),
     verse_book: Joi.string().required(),

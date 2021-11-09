@@ -26,7 +26,7 @@ export interface IGroupFields {
 
 
 export interface IPostsFields {
-  user_id: string,
+  username: string,
   group_id: string,
   verse_of_the_day: string,
   verse_book: string,

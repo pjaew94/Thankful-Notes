@@ -33,6 +33,7 @@ router.post("/", async (req, res) => {
     try {
       const {
         group_id,
+        username,
         first_name,
         last_name,
         age,
@@ -45,8 +46,14 @@ router.post("/", async (req, res) => {
         email,
       ]);
 
+      const user2 = await pool.query("SELECT * FROM users WHERE username = $1", [
+        username
+      ])
+
       if (user.rows.length !== 0) {
-        return res.status(401).send("User already exists");
+        return res.status(401).send("User with that email already exists!");
+      } else if (user2.rows.length !== 0 ){
+        return res.status(401).send("User with that username already exists!")
       }
 
       const saltRound = 10;
@@ -57,10 +64,11 @@ router.post("/", async (req, res) => {
       const isInGroup = group_id ? true : false;
 
       const newUser = await pool.query(
-        "INSERT INTO users(is_in_group, group_id, first_name, last_name, age, email, password) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+        "INSERT INTO users(is_in_group, group_id, username, first_name, last_name, age, email, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
         [
           isInGroup,
           group_id,
+          username,
           first_name,
           last_name,
           age,
@@ -68,6 +76,8 @@ router.post("/", async (req, res) => {
           bcryptPassword
         ]
       );
+
+  
 
       const token = jwtGenerator(newUser.rows[0].id);
 
@@ -175,7 +185,9 @@ router.put('/join-group', authorization, async(req, res) => {
     const {unique_group_name} = req.body
 
     const group = await pool.query("SELECT id, group_name FROM groups WHERE unique_group_name = $1", [unique_group_name])
+
     if(group.rows.length > 0) {
+
       await pool.query("UPDATE users SET group_id = $1, is_in_group = $2 WHERE id = $3", [group.rows[0].id, true, req.user])
       return res.status(200).send(`You've successfully joined ${group.rows[0].group_name}!`)
     } else {
@@ -188,6 +200,40 @@ router.put('/join-group', authorization, async(req, res) => {
   }
 })
 
+// Get All User Posts - FINISH
+router.get("/posts/:username", authorization, async (req, res) => {
+ 
+  try {
+    const user = await pool.query("SELECT group_id FROM users WHERE username = $1", [
+        req.params.username
+    ])
+    const userGroupId = user.rows[0].group_id;
+
+    const visitor = await pool.query(
+      "SELECT group_id, username FROM users WHERE id = $1",
+      [req.user]
+    );
+    const visitorInfo = visitor.rows[0];
+
+    if (
+      visitorInfo.group_id !== userGroupId &&
+      visitorInfo.username !== req.params.username
+    ) {
+      return res
+        .status(401)
+        .send("You do not have permission to view this user's posts.");
+    }
+    const posts = await pool.query(
+      "SELECT * FROM posts WHERE username = $1",
+      [req.params.username]
+    );
+
+    return res.status(200).json(posts.rows);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error"); 
+  }
+});
 
 
 module.exports = router;

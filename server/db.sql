@@ -1,15 +1,18 @@
 CREATE DATABASE thankfulnotes;
 
 CREATE TABLE users (
+    id uuid NOT NULL PRIMARY KEY DEFAULT
+    uuid_generate_v4(),
     is_in_group BOOLEAN NOT NULL,
     group_id uuid,
+    username VARCHAR(100) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     age INT NOT NULL check(age >= 1 and age <= 120),
     email VARCHAR(100) NOT NULL,
     password VARCHAR(200) NOT NULL,
     date_joined timestamp with time zone DEFAULT CURRENT_TIMESTAMP(0),
-    UNIQUE (email)
+    UNIQUE (email, username)
 );
 
 
@@ -35,7 +38,7 @@ INSERT INTO groups (unique_group_name, group_name) values ('Jesus Love Church', 
 CREATE TABLE posts (
     id uuid NOT NULL PRIMARY KEY DEFAULT
     uuid_generate_v4(),
-    user_id uuid NOT NULL,
+    username VARCHAR(100) NOT NULL,
     group_id uuid,
     verse_of_the_day VARCHAR(1000) NOT NULL,
     verse_book VARCHAR(100) NOT NULL,
@@ -49,6 +52,6 @@ CREATE TABLE posts (
     show_thanks2 VARCHAR(2000) NOT NULL,
     show_thanks3 VARCHAR(2000) NOT NULL,
     is_private BOOLEAN NOT NULL,
-    date_joined timestamp with time zone DEFAULT CURRENT_TIMESTAMP(0)
+    date_posted timestamp with time zone DEFAULT CURRENT_TIMESTAMP(0)
 );
 

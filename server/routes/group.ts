@@ -37,7 +37,55 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Get group info - FINISH
 router.get('/', authorization, async(req, res) => {
-  
+  try {
+    const user = await pool.query("SELECT group_id FROM users WHERE id = $1", [req.user])
+    const usersGroupId = user.rows[0].group_id;
+    const group = await pool.query("SELECT * FROM groups WHERE id = $1", [usersGroupId])
+
+
+    const allMembers = await pool.query("SELECT username, first_name, last_name FROM users WHERE group_id = $1", [
+      usersGroupId
+    ]);
+
+    let groupInfo = group.rows[0]
+    let groupInfoAndMembers = {...groupInfo, members: allMembers.rows}
+
+    return res.status(200).json(groupInfoAndMembers)
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
 })
+
+// Get All Group Posts - FINISH
+router.get("/posts/:group_id", authorization, async (req, res) => {
+ 
+  try {
+    const user = await pool.query("SELECT group_id FROM users WHERE id = $1", [
+        req.user
+    ])
+    const userGroupId = user.rows[0].group_id;
+
+
+    if (
+      userGroupId !== req.params.group_id
+    ) {
+      return res
+        .status(401)
+        .send("You do not have permission to view the group's posts");
+    }
+    const posts = await pool.query(
+      "SELECT * FROM posts WHERE group_id = $1",
+      [req.params.group_id]
+    );
+
+    return res.status(200).json(posts.rows);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error"); 
+  }
+});
+
 module.exports = router;
